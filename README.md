@@ -3,7 +3,7 @@ This hammerspoon script for macOS opens an app when both AC power and a network 
 
 An example usecase would be for seeding with a torrent client so it doesn't drain battery when not plugged into AC power, and if there is power but no network connection, the app wouldn't need to be open anyways.
 
-Assuming your usecase is likewise an app that is ran in the background, it would be optimal for it to be set to launch minimized if the the option is offered.
+Assuming your usecase is likewise an app that is ran in the background, it would be optimal for it to launch minimized if the option is offered.
 
 ## Installation
 - Install Hammerspoon from https://www.hammerspoon.org
