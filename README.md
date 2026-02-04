@@ -1,4 +1,4 @@
-# AppOnlyOpenWithNetAndPowerWithHammerspoon
+# AppOnlyOpenWithNetAndPowerViaHammerspoon
 This hammerspoon script for macOS opens an app when both AC power and a network connection are detected, and quits the app when either condition is false.
 
 An example usecase would be for seeding with a torrent client so it doesn't drain battery when not plugged into AC power, and if there is power but no network connection, the app wouldn't need to be open anyways.
