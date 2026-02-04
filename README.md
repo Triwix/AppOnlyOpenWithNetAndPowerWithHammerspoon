@@ -8,7 +8,7 @@ Assuming your usecase is likewise an app that is ran in the background, it would
 ## Installation
 - Install Hammerspoon from https://www.hammerspoon.org
 - Copy the contents of the .rtf file into your hammerspoon config
-- Replace `YOUR_APP` with the app you want to be controlled by this automation. Verify the app name matches exactly (case-senstive). Replace `YOUR_WIFI` with your local WiFi SSID. Keep the surrounding "qBittorrent" so for example it would look like this:
+- Replace `YOUR_APP` with the app you want to be controlled by this automation. Verify the app name matches exactly (case-senstive). Replace `YOUR_WIFI` with your local WiFi SSID. Keep the surrounding "" so for example it would look like this:
 ```bash
 -- Configuration
 local appName = “qBittorrent”
