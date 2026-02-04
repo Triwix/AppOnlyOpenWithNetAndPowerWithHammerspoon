@@ -1,4 +1,4 @@
-# AppOnlyOpenWithNetAndPower-Hammerspoon
+# AppOnlyOpenWithNetAndPowerWithHammerspoon
 This hammerspoon script for macOS opens an app when both AC power and a network connection are detected, and quits the app when either condition is false.
 
 An example usecase would be for seeding with a torrent client so it doesn't drain battery when not plugged into AC power, and if there is power but no network connection, the app wouldn't need to be open anyways.
@@ -8,8 +8,12 @@ Assuming your usecase is likewise an app that is ran in the background, it would
 ## Installation
 - Install Hammerspoon from https://www.hammerspoon.org
 - Copy the contents of the .rtf file into your hammerspoon config
-- Replace `YOUR_APP` with the app you want to be controlled by this automation. Verify the app name matches exactly (case-senstive).
-- Replace `YOUR_WIFI` with your local WiFi SSID
+- Replace `YOUR_APP` with the app you want to be controlled by this automation. Verify the app name matches exactly (case-senstive). Replace `YOUR_WIFI` with your local WiFi SSID. Keep the surrounding "qBittorrent" so for example it would look like this:
+```bash
+-- Configuration
+local appName = “qBittorrent”
+local requiredWiFi = “Home_5G”
+```
 
 ## How It Works
 The script monitors:
