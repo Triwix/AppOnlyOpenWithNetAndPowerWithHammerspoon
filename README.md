@@ -6,7 +6,7 @@ An example usecase would be for seeding with a torrent client so it doesn't drai
 Assuming your usecase is likewise an app that is ran in the background, it would be optimal for it to launch minimized if the option is offered.
 
 ## Installation
-- Install Hammerspoon from https://www.hammerspoon.org
+- Install Hammerspoon 1.1.0 from https://www.hammerspoon.org
 - Copy the contents of the .rtf file into your hammerspoon config
 - Replace `YOUR_APP` with the app you want to be controlled by this automation. Verify the app name matches exactly (case-senstive). Replace `YOUR_WIFI` with your local WiFi SSID. Keep the surrounding "" so for example it would look like this:
 ```bash
