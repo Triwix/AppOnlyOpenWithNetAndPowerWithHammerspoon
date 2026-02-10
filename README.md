@@ -1,144 +1,155 @@
-# Hammerspoon Auto App Manager
+# Hammerspoon AC + Internet App Guard
 
-A Hammerspoon `init.lua` script that automatically keeps one app running (or closed) based on power and network conditions.
+A Hammerspoon automation script that keeps one target app running **only when allowed conditions are met**.
 
-It includes:
+Primary use case:
+- Run app only when on `AC Power`
+- Require internet reachability
+- Optionally require a specific Wi-Fi SSID or Ethernet rules
+
+## What It Does
+
+The script continuously evaluates whether the target app should run.
+
+If conditions are allowed:
+- Launches the app in the background when it is not running.
+
+If conditions are blocked:
+- Requests graceful quit.
+- Force-kills after a timeout if it is still running.
+
+It also provides:
 - Menu bar status + controls
-- Persisted setup values (target app + SSID)
-- Event-driven enforcement (Wi-Fi, power, wake, app lifecycle, reachability)
-- Graceful quit with forced-kill fallback
-- Optional debug logging + file log rotation
-
-## How It Works
-
-The script continuously evaluates whether your target app **should be running**.
-
-It can require:
-- A specific power source (for example `AC Power`)
-- A specific Wi-Fi SSID
-- Ethernet-only mode
-- Ethernet default-route matching
-- Internet reachability
-
-Then it will:
-- Launch the app in the background if it should be running but is closed
-- Quit the app if it should be closed but is running
+- Persisted setup values (target app + required SSID)
+- Event-driven reevaluation (power, Wi-Fi, reachability, app events, wake)
+- Optional debug/file logging
 
 ## Requirements
 
 - macOS
-- [Hammerspoon](https://www.hammerspoon.org/) installed
-- Accessibility permissions granted to Hammerspoon
-
-No external Lua dependencies are required.
+- [Hammerspoon](https://www.hammerspoon.org/)
+- Hammerspoon accessibility permissions
 
 ## Install
 
-1. Copy this script into your Hammerspoon config as:
-   - `~/.hammerspoon/init.lua`
-2. Open Hammerspoon and click **Reload Config**.
-3. Confirm the menu bar item appears (default prefix is `ツ`).
+### Option A: Use as your `init.lua`
 
-## Quick Start
+1. Copy `init.lua` contents into `~/.hammerspoon/` or paste the contents directly into the hammerspoon config entry UI.
+2. Reload Hammerspoon config
 
-1. Set a target app in `config.target`:
-   - `bundleID` (preferred), or
-   - `appName`
-2. Keep `rules.requiredPowerSource = "AC Power"` if you only want automation while plugged in.
-3. Optionally set `rules.requiredWiFi` to a trusted SSID.
-4. Reload Hammerspoon.
-5. Use the menu bar item:
-   - `Set app name...` / `Set bundle ID...`
-   - `Validate target now`
-   - `Re-check now`
+### Option B: Keep it as a separate file
 
-If both `bundleID` and `appName` are set, bundle ID logic is used first.
+Rename `init.lua` to something else like `TMAuto.lua` in `~/.hammerspoon/` and load it from your own `init.lua`:
+
+```lua
+dofile(os.getenv("HOME") .. "/.hammerspoon/TMAuto.lua")
+```
+
+## Quick Start (AC + Internet Only)
+
+1. Set target app:
+- `config.target.bundleID = "com.your.app"` (preferred)
+- or `config.target.appName = "Your App"`
+
+2. Keep/default these:
+- `config.rules.requiredPowerSource = "AC Power"`
+- `config.rules.requiredWiFi = ""` (any Wi-Fi)
+- `config.rules.requireEthernetOnly = false`
+- `config.rules.allowEthernetFallback = true`
+
+3. Reload config.
+
+4. In menu bar:
+- Use `Validate target now`
+- Use `Re-check now` to force immediate evaluation
 
 ## Configuration
 
-The script is configured via the `config` table near the top of `init.lua`.
-
 ### `config.target`
 
-- `bundleID` (`string`): Preferred app identifier, example `com.apple.Safari`
-- `appName` (`string`): App name fallback, example `Safari`
+- `bundleID` (string): Preferred identifier, e.g. `com.apple.Safari`
+- `appName` (string): Optional name fallback when bundle ID is empty
 
 ### `config.rules`
 
-- `requiredPowerSource` (`string`): `""`, `AC Power`, `Battery Power`, or `UPS Power`
-- `requiredWiFi` (`string`): Required SSID; empty means any Wi-Fi
-- `requireEthernetOnly` (`boolean`): Only Ethernet can satisfy network rules
-- `allowEthernetFallback` (`boolean`): Allow Ethernet when Wi-Fi rule is not met
-- `requireEthernetDefaultRouteMatch` (`boolean`): Ethernet must also own default route
+- `requiredPowerSource` (string): `""`, `"AC Power"`, `"Battery Power"`, `"UPS Power"`
+- `requiredWiFi` (string): Required SSID, or empty for any Wi-Fi
+- `requireEthernetOnly` (boolean): Only Ethernet may satisfy network requirement
+- `allowEthernetFallback` (boolean): Allow Ethernet if Wi-Fi condition is not met
+- `requireEthernetDefaultRouteMatch` (boolean): Ethernet interface must own default route
 
 ### `config.behavior`
 
-- `automationEnabled` (`boolean`): Master enable/disable
-- `lockAutomationToggle` (`boolean`): Prevent disabling from menu
-- `debug` (`boolean`): Verbose console logging
-- `logToFile` (`boolean`): Append logs to `logPath`
-- `logPath` (`string`): Default `~/.hammerspoon/app-manager.log`
-- `logMaxBytes` (`number`): Rotate when file exceeds size (0 disables rotation)
-- `debounceSeconds` (`number`): Delay before handling rapid event bursts
-- `wakeDelaySeconds` (`number`): Delay after wake before reevaluation
-- `enforceIntervalSeconds` (`number`): Periodic safety check (0 disables)
-- `networkCacheTTLSeconds` (`number`): Cache Wi-Fi/Ethernet checks
-- `minActionGapSeconds` (`number`): Minimum gap between launch/quit actions
-- `gracefulQuitTimeoutSeconds` (`number`): Wait before force-kill fallback
+- `automationEnabled` (boolean): Master on/off
+- `lockAutomationToggle` (boolean): Lock menu disable action
+- `debug` (boolean): Console debug logs
+- `logToFile` (boolean): Write logs to file
+- `logPath` (string): Log path (default `~/.hammerspoon/app-manager.log`)
+- `logMaxBytes` (number): Rotate log file at max size (`0` disables rotation)
+- `debounceSeconds` (number): Debounce rapid event bursts
+- `wakeDelaySeconds` (number): Delay checks after wake
+- `enforceIntervalSeconds` (number): Periodic safety check interval (`0` disables)
+- `networkCacheTTLSeconds` (number): Network state cache TTL
+- `minActionGapSeconds` (number): Minimum seconds between launch/quit actions
+- `gracefulQuitTimeoutSeconds` (number): Wait before forced kill
 
 ### `config.menuBar`
 
-- `enabled` (`boolean`): Show/hide menu bar item
-- `titlePrefix` (`string`): Prefix in title (default `ツ`)
-- `showConfigSection` (`boolean`)
-- `showAllConfigValues` (`boolean`)
-- `showQuickActions` (`boolean`)
-- `showStateText` (`boolean`)
+- `enabled` (boolean): Show/hide menu item
+- `titlePrefix` (string): Prefix shown in menu bar title
+- `showConfigSection` (boolean): Show expandable configuration section
+- `showAllConfigValues` (boolean): Full vs compact config list inside that section
+- `showQuickActions` (boolean): Show quick actions/toggles block
+- `showStateText` (boolean): Show ON/OFF/WAIT/BLOCK text in title
 
 ## Menu Features
 
-The menu provides:
-- Live status (desired state, running state, reason, last trigger/check)
-- Setup actions that persist across reloads:
-  - Target app name
-  - Target bundle ID
-  - Desired SSID
-- Quick actions:
-  - Re-check now
-  - Enable/disable automation
-- Session-only toggles:
-  - Debug logging
-  - Ethernet fallback
-  - Show state text in menu title
+- Live status and reason
+- Target setup controls (app name, bundle ID, SSID)
+- `Validate target now`
+- `Re-check now`
+- Session-only toggles for debug, Ethernet fallback, title state text
+- Optional expandable configuration section
 
-Persisted setup values are stored via `hs.settings` key `autoManagedApp.target`.
+## Decision Logic (Simplified)
 
-## Runtime Signals Watched
+The app is allowed only when all required checks pass:
 
-Automation reevaluates on:
-- Battery/power changes
-- Wi-Fi changes
-- Internet reachability changes
-- Target app launch/termination events
-- System wake
-- Optional periodic timer
+1. Target is configured
+2. Power source matches rule
+3. Internet is reachable
+4. Network rule is satisfied (trusted Wi-Fi and/or Ethernet fallback rules)
+
+If any required check fails, the app is blocked.
+
+## Persistence
+
+Persisted with `hs.settings` key:
+- `autoManagedApp.target`
+
+Persisted fields:
+- `bundleID`
+- `appName`
+- `requiredWiFi`
 
 ## Troubleshooting
 
-- `Target not configured`:
-  - Set `target.bundleID` or `target.appName`.
-- `Bundle ID unresolved`:
-  - Validate with menu action `Validate target now`.
-  - Unresolved IDs may still be valid in some cases.
-- App does not close:
-  - Script requests graceful quit first, then force-kills after timeout.
-- App does not launch:
-  - Verify app exists, spelling is exact, and Hammerspoon permissions are granted.
-- Unexpected blocked state:
-  - Check current power source, SSID, Ethernet status, and reachability.
+- `Target not configured`
+  - Set bundle ID or app name.
+
+- `Bundle ID unresolved`
+  - Use `Validate target now`.
+  - Confirm bundle ID format and app availability.
+
+- App keeps running when blocked
+  - Check `gracefulQuitTimeoutSeconds` and Hammerspoon permissions.
+  - Verify app isn’t respawning from another launcher.
+
+- Unexpected blocked status
+  - Check menu reason line for power/network details.
 
 ## Notes
 
-- Setup changes from the menu are persisted.
-- Most behavior/config toggles in the menu are session-only.
-- Reloading config cleans up prior watchers/timers before re-registering.
+- Runtime cleanup is performed on config reload (watchers/timers/menu cleanup).
+- `Disable automation` may be locked if `lockAutomationToggle = true`.
+- Network checks are cached briefly to reduce churn (`networkCacheTTLSeconds`).
