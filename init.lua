@@ -59,6 +59,9 @@ local state = {
     lastKnownTargetPID = nil,
     pendingForcedQuit = nil,
     pendingForcedQuitPID = nil,
+    cachedMenuBundleResolvableBundleID = nil,
+    cachedMenuBundleResolvableValue = nil,
+    cachedMenuBundleResolvableCheckedAt = nil,
     menuBar = nil,
     watchers = {},
     watcherRunning = {},
@@ -204,6 +207,29 @@ local function isBundleIDResolvable(bundleID)
     end
 
     return false
+end
+
+local MENU_BUNDLE_RESOLVE_CACHE_TTL_SECONDS = 60
+
+local function getCachedMenuBundleResolvable(bundleID)
+    bundleID = trim(bundleID)
+    if bundleID == "" then
+        return true
+    end
+
+    local now = os.time()
+    if state.cachedMenuBundleResolvableBundleID == bundleID
+        and state.cachedMenuBundleResolvableCheckedAt
+        and (now - state.cachedMenuBundleResolvableCheckedAt) < MENU_BUNDLE_RESOLVE_CACHE_TTL_SECONDS
+    then
+        return state.cachedMenuBundleResolvableValue == true
+    end
+
+    local resolvable = isBundleIDResolvable(bundleID)
+    state.cachedMenuBundleResolvableBundleID = bundleID
+    state.cachedMenuBundleResolvableValue = resolvable and true or false
+    state.cachedMenuBundleResolvableCheckedAt = now
+    return resolvable
 end
 
 local function isAppNameResolvable(appName)
@@ -442,7 +468,7 @@ local function validateAndNormalizeConfig()
         config.behavior.automationEnabled = true
     end
     if type(config.behavior.lockAutomationToggle) ~= "boolean" then
-        config.behavior.lockAutomationToggle = true
+        config.behavior.lockAutomationToggle = false
     end
     if type(config.behavior.debug) ~= "boolean" then
         config.behavior.debug = false
@@ -1420,7 +1446,7 @@ local function buildMenu()
     local usingSavedOverrides = hasSavedSetupOverrides()
     local targetConfigured = isTargetConfigured()
     local targetBundle = targetBundleID()
-    local bundleResolvable = isBundleIDResolvable(targetBundle)
+    local bundleResolvable = getCachedMenuBundleResolvable(targetBundle)
     local displayCurrentWiFi = targetConfigured and tostring(state.currentWiFi or "none") or "n/a"
     local displayActiveEthernet = targetConfigured and tostring(state.activeEthernet or "none") or "n/a"
 
@@ -1572,6 +1598,14 @@ local function buildMenu()
         ))
     end
 
+    if config.menuBar.showConfigSection then
+        table.insert(menu, { title = "-" })
+        table.insert(menu, {
+            title = "Configuration",
+            menu = buildConfigurationDetailsMenu(),
+        })
+    end
+
     return menu
 end
 
@@ -1652,7 +1686,7 @@ manageApp = function(trigger)
 
     local app = findRunningTargetApp()
     local appRunning = (app ~= nil)
-    local shouldRun, reason = computeDesiredState(appRunning)
+    local shouldRun, reason = computeDesiredState(false)
 
     if shouldRun and (not appRunning) then
         shouldRun, reason = computeDesiredState(true)
